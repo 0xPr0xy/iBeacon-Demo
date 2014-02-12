@@ -41,7 +41,7 @@ typedef enum {
 @class INBeaconService;
 @protocol INBeaconServiceDelegate <NSObject>
 @optional
-- (void)service:(INBeaconService *)service foundDeviceUUID:(NSString *)uuid withRange:(INDetectorRange)range;
+- (void)service:(INBeaconService *)service foundDeviceUUID:(NSString *)uuid withRange:(INDetectorRange)range andDelay:(float)delay andRSSI:(int)rssi andDate:(NSDate *)date;
 - (void)service:(INBeaconService *)service bluetoothAvailable:(BOOL)enabled;
 @end
 
