@@ -60,6 +60,8 @@
 		AACB914418AB8E1500E8AE0C /* mode_button_detecting_off@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = AACB914018AB8E1500E8AE0C /* mode_button_detecting_off@2x.png */; };
 		AACB914518AB8E1500E8AE0C /* mode_button_broadcasting_off.png in Resources */ = {isa = PBXBuildFile; fileRef = AACB914118AB8E1500E8AE0C /* mode_button_broadcasting_off.png */; };
 		AACB914618AB8E1500E8AE0C /* mode_button_detecting_off.png in Resources */ = {isa = PBXBuildFile; fileRef = AACB914218AB8E1500E8AE0C /* mode_button_detecting_off.png */; };
+		AAF5117318AC057500E658FF /* GraphViewCore.m in Sources */ = {isa = PBXBuildFile; fileRef = AAF5116F18AC057500E658FF /* GraphViewCore.m */; };
+		AAF5117418AC057500E658FF /* GraphView.m in Sources */ = {isa = PBXBuildFile; fileRef = AAF5117118AC057500E658FF /* GraphView.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -176,6 +178,10 @@
 		AACB914018AB8E1500E8AE0C /* mode_button_detecting_off@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "mode_button_detecting_off@2x.png"; path = "Vicinity/mode_button_detecting_off@2x.png"; sourceTree = "<group>"; };
 		AACB914118AB8E1500E8AE0C /* mode_button_broadcasting_off.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = mode_button_broadcasting_off.png; path = Vicinity/mode_button_broadcasting_off.png; sourceTree = "<group>"; };
 		AACB914218AB8E1500E8AE0C /* mode_button_detecting_off.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = mode_button_detecting_off.png; path = Vicinity/mode_button_detecting_off.png; sourceTree = "<group>"; };
+		AAF5116F18AC057500E658FF /* GraphViewCore.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GraphViewCore.m; sourceTree = "<group>"; };
+		AAF5117018AC057500E658FF /* GraphView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GraphView.h; sourceTree = "<group>"; };
+		AAF5117118AC057500E658FF /* GraphView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GraphView.m; sourceTree = "<group>"; };
+		AAF5117218AC057500E658FF /* GraphViewCore.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GraphViewCore.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -282,6 +288,10 @@
 		351FBBF1181AFC7E00299A5A /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				AAF5117018AC057500E658FF /* GraphView.h */,
+				AAF5117118AC057500E658FF /* GraphView.m */,
+				AAF5117218AC057500E658FF /* GraphViewCore.h */,
+				AAF5116F18AC057500E658FF /* GraphViewCore.m */,
 				351FBBF2181AFC9C00299A5A /* ConsoleView.h */,
 				351FBBF3181AFC9C00299A5A /* ConsoleView.m */,
 				356B50A31829972D00318DF1 /* BeaconCircleView.h */,
@@ -302,15 +312,15 @@
 		351FBBFF181EFC4200299A5A /* Util */ = {
 			isa = PBXGroup;
 			children = (
-				351FBC00181EFC8D00299A5A /* GCDUtilities.h */,
-				351FBC01181EFC8D00299A5A /* GCDUtilities.m */,
-				351FBC02181EFC8D00299A5A /* GCDSingleton.h */,
-				351FBC04181EFC9800299A5A /* ReachabilityService.h */,
-				351FBC05181EFC9800299A5A /* ReachabilityService.m */,
-				3590AB5C1832BD7300CBAFB3 /* INWeightedAverage.h */,
-				3590AB5D1832BD7300CBAFB3 /* INWeightedAverage.m */,
 				3590AB601832C56F00CBAFB3 /* EasedValue.h */,
 				3590AB611832C56F00CBAFB3 /* EasedValue.m */,
+				351FBC02181EFC8D00299A5A /* GCDSingleton.h */,
+				351FBC00181EFC8D00299A5A /* GCDUtilities.h */,
+				351FBC01181EFC8D00299A5A /* GCDUtilities.m */,
+				3590AB5C1832BD7300CBAFB3 /* INWeightedAverage.h */,
+				3590AB5D1832BD7300CBAFB3 /* INWeightedAverage.m */,
+				351FBC04181EFC9800299A5A /* ReachabilityService.h */,
+				351FBC05181EFC9800299A5A /* ReachabilityService.m */,
 			);
 			name = Util;
 			sourceTree = "<group>";
@@ -493,8 +503,10 @@
 				351FBBF4181AFC9C00299A5A /* ConsoleView.m in Sources */,
 				351FBC06181EFC9800299A5A /* ReachabilityService.m in Sources */,
 				351FBC3C181EFD7E00299A5A /* Reachability.m in Sources */,
+				AAF5117318AC057500E658FF /* GraphViewCore.m in Sources */,
 				3590AB5E1832BD7300CBAFB3 /* INWeightedAverage.m in Sources */,
 				351FBC30181EFCAF00299A5A /* UIScreen+Ext.m in Sources */,
+				AAF5117418AC057500E658FF /* GraphView.m in Sources */,
 				351FBBF0181ADE9D00299A5A /* CLBeacon+Ext.m in Sources */,
 				356B50A51829972D00318DF1 /* BeaconCircleView.m in Sources */,
 				351FBC37181EFCAF00299A5A /* NSMutableSet+Ext.m in Sources */,
