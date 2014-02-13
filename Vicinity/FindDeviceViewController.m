@@ -32,10 +32,11 @@
 #import "EasyLayout.h"
 #import "ButtonMaker.h"
 #import "BeaconCircleView.h"
+#import "GraphView.h"
 
 #define USE_RSSI_RANGE NO
 
-#define IS_BEACON YES
+#define IS_BEACON NO
 
 #define Delay_INDetectorRangeImmediate	1.2f
 #define Delay_INDetectorRangeNear		1.5f
@@ -61,6 +62,7 @@
     BeaconCircleView *targetCircle;
     UIButton *modeButton;
 	bool colorChangeEnabled;
+	NSMutableArray *rssiValues;
 }
 
 #pragma mark - View Lifecycle
@@ -77,7 +79,6 @@
 {
     [super viewDidLoad];
 	[self loadUI];
-	colorChangeEnabled = true;
 }
 
 - (void)viewDidAppear:(BOOL)animated
@@ -121,8 +122,9 @@
 	} else {
 		[self.view setBackgroundColor:[UIColor whiteColor]];
 	}
-	rssiLabel.text = [NSString stringWithFormat:@"RSSI: %i", rssi];
-	delayLabel.text = [NSString stringWithFormat:@"Delay: %.2f", delay];
+	[rssiLabel setText:[NSString stringWithFormat:@"RSSI: %i", rssi]];
+	[delayLabel setText:[NSString stringWithFormat:@"Delay: %.2f", delay]];
+	[rssiValues addObject:[NSNumber numberWithDouble:rssi * -0.01]];
 }
 
 #pragma mark - Animation Methods
@@ -196,6 +198,9 @@
 /*
  * Method to calculate the delay between the time the iBeacon sent the message 
  * and the time the device received the message
+ * @param NSDate date the date and time the iBeacon sent the message
+ * @returns NSTimeInterval time the ColorChangeInterval minus the time 
+ * it took for the device to receive the message from the iBeacon
  */
 - (NSTimeInterval)calculateTimeLeft:(NSDate *)date
 {
@@ -211,36 +216,44 @@
  */
 - (void)startDetecting
 {
-	[[INBeaconService singleton] addDelegate:self];
-    [[INBeaconService singleton] startDetecting];
-    [self changeInterfaceToDetectMode];
+	if(![[INBeaconService singleton] isDetecting]){
+		[[INBeaconService singleton] addDelegate:self];
+		[[INBeaconService singleton] startDetecting];
+		[self changeInterfaceToDetectMode];
+	}
 }
 /*
  * Method to stop detecting iBeacons
  */
 - (void)stopDetecting
 {
-	[[INBeaconService singleton] removeDelegate:self];
-    [[INBeaconService singleton] stopDetecting];
-	[self changeInterfaceToOffMode];
+	if([[INBeaconService singleton] isDetecting]){
+		[[INBeaconService singleton] removeDelegate:self];
+		[[INBeaconService singleton] stopDetecting];
+		[self changeInterfaceToOffMode];
+	}
 }
 /*
  * Method to start detecting broadcasting to devices
  */
 - (void)startBroadCasting
 {
-	[[INBeaconService singleton] addDelegate:self];
-    [[INBeaconService singleton] startBroadcasting];
-    [self changeInterfaceToBroadcastMode];
+	if(![[INBeaconService singleton] isBroadcasting]){
+		[[INBeaconService singleton] addDelegate:self];
+		[[INBeaconService singleton] startBroadcasting];
+		[self changeInterfaceToBroadcastMode];
+	}
 }
 /*
  * Method to stop detecting broadcasting to devices
  */
 - (void)stopBroadCasting
 {
-	[[INBeaconService singleton] removeDelegate:self];
-    [[INBeaconService singleton] stopBroadcasting];
-	[self changeInterfaceToOffMode];
+	if([[INBeaconService singleton] isBroadcasting]){
+		[[INBeaconService singleton] removeDelegate:self];
+		[[INBeaconService singleton] stopBroadcasting];
+		[self changeInterfaceToOffMode];
+	}
 }
 
 #pragma mark - Button Action
@@ -251,18 +264,33 @@
 - (void)didToggleMode:(UIButton *)button
 {
 	if(IS_BEACON){
-		if ([INBeaconService singleton].isBroadcasting) {
+		if([button isSelected]) {
 			[self stopBroadCasting];
 		} else {
 			[self startBroadCasting];
 		}
 	} else {
-		if ([INBeaconService singleton].isDetecting) {
+		if ([button isSelected]) {
 			[self stopDetecting];
 		} else {
 			[self startDetecting];
 		}
 	}
+}
+
+-(void)gestureHandler:(UISwipeGestureRecognizer *)gesture
+{
+    if(UIGestureRecognizerStateBegan == gesture.state)
+    {
+		if([[[self.view subviews]lastObject] isKindOfClass:[GraphView class]]){
+			[[[self.view subviews]lastObject] removeFromSuperview];
+		} else {
+			CGRect rect = CGRectMake(0.0f, 0.0f, self.view.frame.size.width, self.view.frame.size.height - 82.0f);
+			GraphView *graph = [[GraphView alloc]initWithFrame:rect];
+			[graph setDefaultArray:rssiValues];
+			[self.view addSubview:graph];
+		}
+    }
 }
 
 #pragma mark - UI Methods
@@ -275,15 +303,15 @@
 	self.view.backgroundColor = [UIColor whiteColor];
     
     UIView *bottomToolbar = [[UIView alloc] init];
-    bottomToolbar.backgroundColor = [UIColor colorWithWhite:0.11f alpha:1.0f];
-    bottomToolbar.extSize = CGSizeMake(self.view.extSize.width, 82.0f);
+    [bottomToolbar setBackgroundColor:[UIColor colorWithWhite:0.11f alpha:1.0f]];
+    [bottomToolbar setExtSize:CGSizeMake(self.view.extSize.width, 82.0f)];
     [EasyLayout bottomCenterView:bottomToolbar inParentView:self.view offset:CGSizeZero];
     [self.view addSubview:bottomToolbar];
     
     statusLabel = [[UILabel alloc] init];
-    statusLabel.textColor = [UIColor whiteColor];
-    statusLabel.font = [UIFont fontWithName:@"HelveticaNeue-Light" size:28.0f];
-    statusLabel.text = @"Searching...";
+    [statusLabel setTextColor:[UIColor whiteColor]];
+    [statusLabel setFont:[UIFont fontWithName:@"HelveticaNeue-Light" size:28.0f]];
+    [statusLabel setText:@"Searching..."];
 	[statusLabel setBackgroundColor:[UIColor clearColor]];
     [EasyLayout sizeLabel:statusLabel mode:ELLineModeSingle maxWidth:self.view.extSize.width];
     [EasyLayout centerView:statusLabel inParentView:bottomToolbar offset:CGSizeZero];
@@ -298,32 +326,39 @@
     [self.view addSubview:targetCircle];
     
     delayLabel = [[UILabel alloc] init];
-    delayLabel.textColor = [UIColor blackColor];
-    delayLabel.font = [UIFont fontWithName:@"HelveticaNeue-Light" size:16.0f];
-    delayLabel.text = @"Delay: 0.00";
+	[delayLabel setTextColor:[UIColor blackColor]];
+    [delayLabel setFont:[UIFont fontWithName:@"HelveticaNeue-Light" size:16.0f]];
+	[delayLabel setText:@"Delay: 0.00"];
 	[delayLabel setBackgroundColor:[UIColor clearColor]];
     [EasyLayout sizeLabel:delayLabel mode:ELLineModeMulti maxWidth:100.0f];
     [EasyLayout positionView:delayLabel toRightAndVerticalCenterOfView:targetCircle offset:CGSizeMake(15.0f, 0.0f)];
     [self.view addSubview:delayLabel];
 	
 	rssiLabel = [[UILabel alloc] init];
-    rssiLabel.textColor = [UIColor blackColor];
-    rssiLabel.font = [UIFont fontWithName:@"HelveticaNeue-Light" size:16.0f];
-    rssiLabel.text = @"RSSI: -00";
+    [rssiLabel setTextColor:[UIColor blackColor]];
+    [rssiLabel setFont:[UIFont fontWithName:@"HelveticaNeue-Light" size:16.0f]];
+    [rssiLabel setText:@"RSSI: -00"];
 	[rssiLabel setBackgroundColor:[UIColor clearColor]];
     [EasyLayout sizeLabel:rssiLabel mode:ELLineModeMulti maxWidth:100.0f];
     [EasyLayout positionView:rssiLabel toRightAndVerticalCenterOfView:targetCircle offset:CGSizeMake(15.0f, 30.0f)];
     [self.view addSubview:rssiLabel];
 	
 	if(IS_BEACON){
-		modeButton = [ButtonMaker plainButtonWithNormalImageName:@"mode_button_broadcasting.png" selectedImageName:@"mode_button_broadcasting_off.png"];
+		modeButton = [ButtonMaker plainButtonWithNormalImageName:@"mode_button_broadcasting_off.png" selectedImageName:@"mode_button_broadcasting.png"];
 	} else {
-		modeButton = [ButtonMaker plainButtonWithNormalImageName:@"mode_button_detecting.png" selectedImageName:@"mode_button_detecting_off.png"];
+		modeButton = [ButtonMaker plainButtonWithNormalImageName:@"mode_button_detecting_off.png" selectedImageName:@"mode_button_detecting.png"];
 	}
-	
     [modeButton addTarget:self action:@selector(didToggleMode:) forControlEvents:UIControlEventTouchUpInside];
+	[modeButton setSelected:TRUE];
     [EasyLayout positionView:modeButton aboveView:bottomToolbar offset:CGSizeMake(10.0f, -10.0f)];
-    [self.view addSubview:modeButton];
+	[self.view addSubview:modeButton];
+	
+	if(!IS_BEACON){
+		rssiValues = [[NSMutableArray alloc]init];
+		UILongPressGestureRecognizer* longPressGesture = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(gestureHandler:)];
+		[longPressGesture setMinimumPressDuration:3.0];
+		[self.view addGestureRecognizer:longPressGesture];
+	}
 }
 
 /*
@@ -331,12 +366,12 @@
  */
 - (void)changeInterfaceToBroadcastMode
 {
-    statusLabel.text = @"Broadcasting...";
+	[statusLabel setText:@"Broadcasting..."];
     [EasyLayout sizeLabel:statusLabel mode:ELLineModeSingle maxWidth:self.view.extSize.width];
-    targetCircle.hidden = YES;
-    delayLabel.hidden = YES;
-	rssiLabel.hidden = YES;
-	modeButton.selected = FALSE;
+    [targetCircle setHidden:true];
+    [delayLabel setHidden:true];
+	[rssiLabel setHidden:true];
+	[modeButton setSelected:true];
     [baseCircle startAnimationWithDirection:BeaconDirectionUp];
 }
 
@@ -345,13 +380,14 @@
  */
 - (void)changeInterfaceToDetectMode
 {
-    statusLabel.text = @"Detecting...";
+    [statusLabel setText:@"Detecting..."];
     [EasyLayout sizeLabel:statusLabel mode:ELLineModeSingle maxWidth:self.view.extSize.width];
-    targetCircle.hidden = NO;
-    delayLabel.hidden = NO;
-	rssiLabel.hidden = NO;
-	modeButton.selected = FALSE;
+	[targetCircle setHidden:false];
+    [delayLabel setHidden:false];
+	[rssiLabel setHidden:false];
+	[modeButton setSelected:true];
     [targetCircle startAnimationWithDirection:BeaconDirectionDown];
+	colorChangeEnabled = true;
 }
 
 /*
@@ -359,11 +395,11 @@
  */
 - (void)changeInterfaceToOffMode
 {
-	statusLabel.text = @"Stopped...";
-	targetCircle.hidden = YES;
-    delayLabel.hidden = YES;
-	rssiLabel.hidden = YES;
-	modeButton.selected = TRUE;
+	[statusLabel setText:@"Stopped..."];
+	[targetCircle setHidden:true];
+	[delayLabel setHidden:true];
+	[rssiLabel setHidden:true];
+	[modeButton setSelected:false];
 	
 	if(IS_BEACON){
 		[baseCircle stopAnimation];
