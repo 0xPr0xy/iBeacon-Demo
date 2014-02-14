@@ -38,6 +38,8 @@
 
 #define IS_BEACON NO
 
+#define GRAPH_UPDATE_INTERVAL 5
+
 #define Delay_INDetectorRangeImmediate	1.2f
 #define Delay_INDetectorRangeNear		1.5f
 #define Delay_INDetectorRangeFar		1.8f
@@ -55,14 +57,17 @@
 
 @implementation FindDeviceViewController
 {
+	GraphView *graph;
     UILabel *statusLabel;
     UILabel *delayLabel;
 	UILabel *rssiLabel;
+	NSMutableArray *rssiValues;
     BeaconCircleView *baseCircle;
     BeaconCircleView *targetCircle;
     UIButton *modeButton;
 	bool colorChangeEnabled;
-	NSMutableArray *rssiValues;
+	bool graphViewEnabled;
+	int graphUpdateCount;
 }
 
 #pragma mark - View Lifecycle
@@ -122,9 +127,28 @@
 	} else {
 		[self.view setBackgroundColor:[UIColor whiteColor]];
 	}
+	
 	[rssiLabel setText:[NSString stringWithFormat:@"RSSI: %i", rssi]];
 	[delayLabel setText:[NSString stringWithFormat:@"Delay: %.2f", delay]];
 	[rssiValues addObject:[NSNumber numberWithDouble:rssi * -0.01]];
+	
+	if(graphViewEnabled){
+		[self updateGraph];
+	}
+}
+
+#pragma mark - Graph Methods
+
+/*
+ * Method to update graph at the defined interval
+ */
+- (void)updateGraph
+{
+	graphUpdateCount ++;
+	if(graphUpdateCount >= GRAPH_UPDATE_INTERVAL){
+		[graph updateGraph];
+		graphUpdateCount = 0;
+	}
 }
 
 #pragma mark - Animation Methods
@@ -278,21 +302,6 @@
 	}
 }
 
--(void)gestureHandler:(UISwipeGestureRecognizer *)gesture
-{
-    if(UIGestureRecognizerStateBegan == gesture.state)
-    {
-		if([[[self.view subviews]lastObject] isKindOfClass:[GraphView class]]){
-			[[[self.view subviews]lastObject] removeFromSuperview];
-		} else {
-			CGRect rect = CGRectMake(0.0f, 0.0f, self.view.frame.size.width, self.view.frame.size.height - 82.0f);
-			GraphView *graph = [[GraphView alloc]initWithFrame:rect];
-			[graph setDefaultArray:rssiValues];
-			[self.view addSubview:graph];
-		}
-    }
-}
-
 #pragma mark - UI Methods
 
 /*
@@ -355,9 +364,13 @@
 	
 	if(!IS_BEACON){
 		rssiValues = [[NSMutableArray alloc]init];
-		UILongPressGestureRecognizer* longPressGesture = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(gestureHandler:)];
-		[longPressGesture setMinimumPressDuration:3.0];
-		[self.view addGestureRecognizer:longPressGesture];
+		CGRect rect = CGRectMake(0.0f, 0.0f, self.view.frame.size.width, self.view.frame.size.height - 82.0f);
+		graph = [[GraphView alloc]initWithFrame:rect];
+		[graph setDefaultArray:rssiValues];
+		[self.view addSubview:graph];
+		[self.view bringSubviewToFront:modeButton];
+		graphViewEnabled = true;
+		graphUpdateCount = 0;
 	}
 }
 
@@ -388,6 +401,7 @@
 	[modeButton setSelected:true];
     [targetCircle startAnimationWithDirection:BeaconDirectionDown];
 	colorChangeEnabled = true;
+	[graph setDefaultArray:rssiValues];
 }
 
 /*
@@ -404,6 +418,7 @@
 	if(IS_BEACON){
 		[baseCircle stopAnimation];
 	} else {
+		rssiValues = [[NSMutableArray alloc]init];
 		[targetCircle stopAnimation];
 	}
 }
